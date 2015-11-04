@@ -22,31 +22,38 @@ def unassign(state,assignment):
 #	return assignment
 
 #Return the state having maximum no of neighbourhood states and unassigned frequency  
-def selUnassignedVar(states,states_domain,assignment):
+def selUnassignedVar(states,states_domain,assignment,c):
 	#print states_domain
 	temp = sorted(states_domain, key = lambda k: len(states_domain[k]))
-	print len(assignment.keys())
+	#print len(assignment.keys())
 	temp = [i for i in temp if len(states_domain[i]) == len(states_domain[temp[len(assignment.keys())]])]
-	#return max(set(temp) - set(assignment.keys()), key = lambda k: len(states[k]))
-	temp = states_domain.keys()
+	return max(set(temp) - set(assignment.keys()), key = lambda k: len(states[k]))
+	#temp = states_domain.keys()
+	#print len(temp)
 	#print temp
-	return temp[len(assignment.keys())]
+	#return temp[c]
 #selUnassignedVar(states,states_domain)
 
 def arc_consistency(states,state,states_domain,assignment):
 	for key in states[state]:
 		#print key
 		#for state in states[key]:
-		states_domain[key].remove(assignment[state])
+		if assignment[state] in states_domain[key]:
+			states_domain[key].remove(assignment[state])
+		#print states_domain[key]
+	states_domain[state] = [assignment[state]]
+	print states_domain[state]
 	if min(states_domain, key = lambda k: len(states_domain[k])) == 0:
+		print 'True'
 		return False
 	else:
 		return True
 #	return states_domain			
 
-def isConsistent(states,freq,assignment):
-	for neighbour in states.keys():
+def isConsistent(neighbour_states,freq,assignment):
+	for neighbour in neighbour_states:
 		if (assignment.get(neighbour,None) == freq):
+			print 'Not consistent'
 			return False
 	return True
 #Solves CSP
@@ -57,24 +64,28 @@ def csp(states,states_domain,assignment):
 	#print c
 	if len(assignment.keys()) == len(states.keys()):
 		return assignment
-	var = selUnassignedVar(states,states_domain,assignment)
+	var = selUnassignedVar(states,states_domain,assignment,c)
 	for value in states_domain[var]:
-		if (isConsistent(states,value,assignment)):
+		if (isConsistent(states[var],value,assignment)):
 			#print var,value,assignment
 			assign(var,value,assignment)
-			print var, value, assignment
+			print var, value,c, str(len(assignment)), assignment,
 			#new_state_domain 
 			if arc_consistency(states,var,states_domain,assignment):
 				result = csp(states,states_domain,assignment)
 				#print assignment
 				#print result
 				if result != None:
+					print 'Result True'
 					return result
 			else:
+				print 'Backtrack'
 				unassign(var,assignment)
 
 sol = csp(states,states_domain,assignment)
-print sol
+print len(sol)
+for i in states.keys():
+	print i, sol[i], [i+sol[i] for i in states[i]]
 			
 
 
