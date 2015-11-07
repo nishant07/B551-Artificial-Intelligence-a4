@@ -1,16 +1,24 @@
-import time
+'''
+1)This is a classical CSP. I am using backtracking search algorithm to solve this CSP.
+To optimize this code I have implmented arc_consistency, a type of constrained propogation method in the solution.
+2)I haven't assumed anything which is not specified in problem statement. 
+Only problem I have faced is lack of test cases. It would have been great if more test cases were given.
+3)Solution & Analysis:
+I am selecting unassigned variables such that it's having least possible domain values, i.e. MRV heuristic.
+Then I am iterating over every possible value in its domain to find suitable assignment. If no assignment is found I try to backtrack. If still no solution, I return from recursion getting no solution.
+If an assignment to variable is found then I chose a variable from its neighbours having least MRV value and continue to the resursion.
+For backtrack I am maintaining a list(stack) of last_assignment.
+This code can be optimized by applying degree heuristic in variable selection in case of tie for MRV heuristic.
+'''
 import sys
-init = time.clock()
-f1 = open("adjacent-states","r")
-
 
 #states stores name of state as a key and values as a tuple storing its neighbour states 
+f1 = open("adjacent-states","r")
 states = dict()
 for line in f1:
 	states[line.split()[0]] = tuple(line.split()[1:])
 f1.close()
 
-#states = {'NM':('OK','TX'),'OK':('NM','TX','AR'),'AR':('OK','TX','LA'),'LA':('AR','TX'),'TX':('NM','OK','LA')}
 #domain value in a CSP	
 domain = ('A','B','C','D')
 #states_domain stores a state as a key and possible assignment of frequencies to that particular state
@@ -19,7 +27,7 @@ for key in states.keys():
 	#Initialize every state's domain with all possible domains
 	states_domain[key] = list(domain)
 
-init_assignment = dict()
+init_assignment = dict() #Stores value for legacy constraint. 
 #Reading constrainst file
 f2 = open(sys.argv[1],"r")
 for line in f2:
@@ -28,11 +36,6 @@ for line in f2:
 		init_assignment[temp[0]] = temp[1]
 		states_domain[temp[0]] = list(temp[1])
 f2.close()
-
-#init_assignment = {'California': 'A','Ohio': 'A','Texas': 'B'}
-#init_assignment = {'Mississippi': 'B', 'Oklahoma': 'C', 'Wyoming': 'B', 'Minnesota': 'C', 'Illinois': 'C', 'Arkansas': 'D', 'Indiana': 'A', 'Maryland': 'C', 'Louisiana': 'A', 'New_Hampshire': 'A', 'Texas': 'B', 'New_York': 'A', 'Wisconsin': 'A', 'Iowa': 'B', 'Arizona': 'B', 'South_Carolina': 'C', 'Michigan': 'B', 'Kansas': 'B', 'Utah': 'C', 'Virginia': 'D', 'Oregon': 'B', 'Connecticut': 'B', 'Montana': 'C', 'California': 'A', 'Idaho': 'A', 'New_Mexico': 'D', 'South_Dakota': 'A', 'Massachusetts': 'C', 'Vermont': 'B', 'Georgia': 'B', 'Pennsylvania': 'B', 'Florida': 'C', 'Alaska': 'A', 'Kentucky': 'B', 'Hawaii': 'A', 'Nebraska': 'C', 'North_Dakota': 'B', 'Missouri': 'A', 'Ohio': 'C', 'Alabama': 'A', 'New_Jersey': 'C', 'Colorado': 'A', 'Washington': 'C', 'West_Virginia': 'A', 'Tennessee': 'C', 'Rhode_Island': 'A', 'North_Carolina': 'A', 'Nevada': 'D', 'Delaware': 'A', 'Maine': 'B'}
-#init_assignment = {'Florida': 'A','Texas': 'B','California': 'A','Washington' :'A','New_York': 'B','Pennsylvania': 'C','Maine': 'A','Minnesota': 'A','Idaho': 'C','Alaska': 'A','Louisiana': 'A','Nebraska':'A','Montana': 'A','Indiana': 'C','Georgia': 'D','Nevada': 'D'}
-#init_assignment = {'Alabama':'A','Mississippi':'A'}
 
 def assign(state,frequency,states_domain,assignment,last_assignment):	
 	assignment[state] = frequency
@@ -43,7 +46,6 @@ def unassign(state,states_domain,assignment):
 	states_domain[state] = list(set(domain) - set(assignment[state]))
 	del assignment[state]
 
-neighbour_stack = []
 #Return the state having maximum no of neighbourhood states and unassigned frequency  
 def selUnassignedVar(states,states_domain,assignment,neighbour_stack = []):
 	for key in assignment.keys():
@@ -51,10 +53,12 @@ def selUnassignedVar(states,states_domain,assignment,neighbour_stack = []):
 			neighbour_stack.remove(key)
 	if len(neighbour_stack) != 0:
 		#Return one of neighbour state having least number of domain possibilities remaining
+		#MRV Heuristic
 		temp = sorted(neighbour_stack, key = lambda k: len(states_domain[k]))
 		return temp[0]
 	else:
 		#If no neighbour is remaining after particular assignment, return a state from remaining unassigned states having least number of domain possibilities remaining
+		#MRV Heuristic
 		temp = sorted(states_domain, key = lambda k: len(states_domain[k]))
 		temp = [i for i in temp if len(states_domain[i]) == len(states_domain[temp[len(assignment.keys())]])]
 		return max(set(temp) - set(assignment.keys()), key = lambda k: len(states[k]))
@@ -85,7 +89,7 @@ def csp_backtrack(states,states_domain,assignment={}):
 	#Check if an assignment(solution) is found
 	if len(assignment.keys()) == len(states.keys()):
 		return assignment	
-	#neighbour_stack = []
+	
 	var = selUnassignedVar(states,states_domain,assignment,neighbour_stack)
 	if len(states[var])!=0:
 		neighbour_stack = list(states[var])
@@ -101,19 +105,19 @@ def csp_backtrack(states,states_domain,assignment={}):
 					backtrack_counter+=1
 					print 'Backtrack'
 					unassign(last_assignment.pop(),states_domain,assignment)
+	return False
 
 backtrack_counter = 0
 neighbour_stack = []
-last_assignment = []
+last_assignment = [] #Works as a stack to store last assignment, so this can be used in backracking.
 #Calling csp backtrack algo
 sol = csp_backtrack(states,states_domain)
-
-if sol is False or sol == None:
+f3 = open("results.txt","w")
+if sol is False or sol == None or len(sol) < 50:
 	print 'No solution found'
+	f3.write('')
 else:
-	f3 = open("results.txt","w")
 	for k,v in sol.items():
 		f3.write(k+' '+v+'\n')
-	f3.close()	
-print 'Total time taken:',time.clock()-init
+f3.close()	
 print 'Number of backtracks: ',backtrack_counter
