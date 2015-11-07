@@ -1,10 +1,12 @@
+import time
+init = time.clock()
 f = open("adjacent-states","r")
 
 #states stores name of state as a key and values as a tuple storing its neighbour states 
 states = dict()
 for line in f:
 	states[line.split()[0]] = tuple(line.split()[1:])
-
+#states = {'NM':('OK','TX'),'OK':('NM','TX','AR'),'AR':('OK','TX','LA'),'LA':('AR','TX'),'TX':('NM','OK','LA')}
 #domain value in a CSP	
 domain = ('A','B','C','D')
 #states_domain stores a state as a key and possible assignment of frequencies to that particular state
@@ -13,7 +15,7 @@ for key in states.keys():
 	states_domain[key] = list(domain)
 last_assignment = []
 init_assignment = {}
-init_assignment = {'California': 'A','Ohio': 'A','Texas': 'B'}
+#init_assignment = {'California': 'A','Ohio': 'A','Texas': 'B'}
 '''
 if init_assignment != None:
     assignment = init_assignment
@@ -22,8 +24,9 @@ else:
 '''	
 assignment = {}
 init_assignment = {'Florida': 'A','Texas': 'B','California': 'A','Washington' :'A','New_York': 'B','Pennsylvania': 'C','Maine': 'A','Minnesota': 'A','Idaho': 'C','Alaska': 'A','Louisiana': 'A','Nebraska':'A','Montana': 'A','Indiana': 'C','Georgia': 'D','Nevada': 'D'}
+#init_assignment = {'Alabama':'A','Mississippi':'A'}
 for key in init_assignment.keys():
-	states_domain[key] = init_assignment[key]
+	states_domain[key] = list(init_assignment[key])
 
 def neighbours(state,states):
 	return states[state]
@@ -33,7 +36,7 @@ def assign(state,states_domain,frequency,assignment):
 	states_domain[state] = [frequency]
 	last_assignment.append(state)
 	print "Last assi",last_assignment
-	#print assignment
+	print assignment
 #	return assignment
 
 def unassign(state,assignment,last_assignment):
@@ -98,27 +101,32 @@ def csp(states,states_domain,assignment):
 			#print var,value,assignment
 			assign(var,states_domain,value,assignment)
 			print var, value,c, str(len(assignment)), assignment,
-			#new_state_domain 
-			#if (isConsistent(states[var],value,assignment)):
 			if arc_consistency(states,var,states_domain,assignment):
-				result = csp(states,states_domain,assignment)
-				if result != None:
-					print 'Result True'
-					return result
-				else:
-					c+=1
-					print 'Backtrack'
-					unassign(last_assignment.pop(),assignment,last_assignment)
+					result = csp(states,states_domain,assignment)
+					if result != None:
+						#print 'Result True'
+						return result
+					else:
+						c+=1
+						print 'Backtrack'
+						unassign(last_assignment.pop(),assignment,last_assignment)
+
 
 sol = csp(states,states_domain,assignment)
-print c, sol
-print len(sol)
-for k,v in states.items():
-	if sol[k] in [sol[i] for i in v]:
-		'Alert'
-	print sol[k],":",[sol[i] for i in v]
-for key in init_assignment.keys():
-	if sol[key]!=init_assignment[key]:
-		"OHO"
-	print key,sol[key]
+print c
+if sol is False or sol == None:
+	print 'No solution found'
+else:
+	print len(sol)
+	
+	for k,v in states.items():
+		if sol[k] in [sol[i] for i in v]:
+			'Alert'
+		print k,sol[k],":",[sol[i] for i in v]
+	for key in init_assignment.keys():
+		if sol[key]!=init_assignment[key]:
+			"OHO"
+		print key,sol[key]
 	#print i, sol[i], [i+sol[i] for i in states[i]]
+	
+print time.clock()-init
