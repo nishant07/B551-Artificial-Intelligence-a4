@@ -85,7 +85,7 @@ def isConsistent(neighbour_states,freq,assignment):
 
 #Backtrack algo implementation
 def csp_backtrack(states,states_domain,assignment={}):
-	global neighbour_stack, last_assignment
+	global neighbour_stack, last_assignment, backtrack_counter
 	#Check if an assignment(solution) is found
 	if len(assignment.keys()) == len(states.keys()):
 		return assignment	
@@ -104,8 +104,7 @@ def csp_backtrack(states,states_domain,assignment={}):
 				else:
 					backtrack_counter+=1
 					print 'Backtrack'
-					unassign(last_assignment.pop(),states_domain,assignment)
-	return False
+					unassign(last_assignment.pop(),states_domain,assignment)	
 
 backtrack_counter = 0
 neighbour_stack = []
